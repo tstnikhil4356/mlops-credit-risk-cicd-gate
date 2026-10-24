@@ -10,7 +10,7 @@ training:
       family: logistic_regression
       params: {max_iter: 2000}
       search_space:
-        C: [0.03, 0.1, 0.3, 1.0, 3.0]
+        C: [0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0]
         class_weight: [null, balanced]
 tracking:
   tracking_uri: sqlite:///mlflow.db
