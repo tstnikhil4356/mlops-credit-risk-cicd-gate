@@ -14,4 +14,4 @@ Selection metric: cross-validated PR-AUC on the training split (5 folds). Test s
 | ablation/no-missing-indicator | logreg_tuned | 0.8625 (0.047) | 0.8767 | 0.9688 | 0.971 | 0.532 | 0.833 | 0.839 | 0.0555 | `ae566bbf` |
 | ablation/no-ratios | logreg_tuned | 0.8242 (0.067) | 0.8260 | 0.9454 | 0.941 | 0.525 | 0.812 | 0.833 | 0.0691 | `46c6b911` |
 
-**Tracked runs:** 38 in total (credit-risk: 9, credit-risk-ci: 29). Runs with logged model artefact: 38; with stored config: 38. Full list: `reports/tracking/all_runs.csv`.
+**Tracked runs:** 49 in total (credit-risk: 9, credit-risk-ci: 40). Runs with logged model artefact: 49; with stored config: 49. Full list: `reports/tracking/all_runs.csv`.

@@ -4,7 +4,7 @@
 
 ## 1. Problem and what we built
 
-An untested change lowered a monthly credit-default model's quality for two weeks, and nobody could say which code, configuration or data produced it. We built a workflow in which **every change is versioned (Git + DVC), validated (Pydantic configs, data contract), tested (58 pytest tests), tracked (MLflow, 38 runs) and accepted only if a retrained model is not worse than a protected baseline (GitHub Actions gate)**. We also chose the gate rule by replaying eight candidate rules against our own run history.
+An untested change lowered a monthly credit-default model's quality for two weeks, and nobody could say which code, configuration or data produced it. We built a workflow in which **every change is versioned (Git + DVC), validated (Pydantic configs, data contract), tested (58 pytest tests), tracked (MLflow, 49 runs) and accepted only if a retrained model is not worse than a protected baseline (GitHub Actions gate)**. We also chose the gate rule by replaying eight candidate rules against our own run history.
 
 ![Lifecycle map](../reports/figures/lifecycle_map.png)
 
@@ -72,11 +72,15 @@ The tree ensembles overfit 600 training rows. The selected run is registered as 
 5. publishes a Markdown summary (checks, metric deltas, failing tests, provenance) to the job page and as a PR comment;
 6. fails the required check to block the merge.
 
-The baseline can change only through `scripts/update_baseline.py` (clean tree, mandatory reason) in a PR labelled `baseline-update`. There, a `baseline-guard` job retrains and requires an exact (1e-6) match, so a hand-lowered baseline cannot merge. CODEOWNERS and branch protection cover the rest. The CI history shows three PRs:
+The baseline can change only through `scripts/update_baseline.py` (clean tree, mandatory reason) in a PR labelled `baseline-update`. There, a `baseline-guard` job retrains and requires an exact (1e-6) match, so a hand-lowered baseline cannot merge. CODEOWNERS and branch protection cover the rest. The CI history on GitHub (https://github.com/tstnikhil4356/mlops-credit-risk-cicd-gate) shows:
 
-- PR 1 passes (wider C grid);
-- PR 2 is blocked because the model is worse (delay features dropped);
-- PR 3 is blocked by the failing test `test_ratio_zero_limit_with_balance_is_capped`.
+- **#1 passes and merges** (wider C grid);
+- **#2 is blocked because the model is worse**: delay features dropped, all tests pass, but PR-AUC 0.7830 (−0.093) and recall 0.82;
+- **#3 is blocked by failing tests** (zero-limit contract) even though the metrics did not move;
+- #4 brings in dataset v2;
+- #5 updates the baseline, which `baseline-guard` rejected until it was labelled and then verified as reproducing exactly.
+
+Linux CI reproduces the macOS numbers exactly (≈1 min per run).
 
 ## 3. Choosing and defending the gate (Task 8)
 

@@ -21,7 +21,7 @@ strong { color: #13232f; }
 <p class="meta">MLOps (Elective II), Project 1 · Team: Nikhil Singh (B042) &amp; Harsh Jain (B059) · Syllabus topics 1, 2, 4, 10, 11, 12 · All results reproducible with <code>make setup data reproduce</code>; every number below is traceable to a tracked MLflow run (IDs in <code>reports/</code>).</p>
 
 <h2>1. Problem and what we built</h2>
-<p>An untested change lowered a monthly credit-default model's quality for two weeks, and nobody could say which code, configuration or data produced it. We built a workflow in which <strong>every change is versioned (Git + DVC), validated (Pydantic configs, data contract), tested (58 pytest tests), tracked (MLflow, 38 runs) and accepted only if a retrained model is not worse than a protected baseline (GitHub Actions gate)</strong>. We also chose the gate rule by replaying eight candidate rules against our own run history.</p>
+<p>An untested change lowered a monthly credit-default model's quality for two weeks, and nobody could say which code, configuration or data produced it. We built a workflow in which <strong>every change is versioned (Git + DVC), validated (Pydantic configs, data contract), tested (58 pytest tests), tracked (MLflow, 49 runs) and accepted only if a retrained model is not worse than a protected baseline (GitHub Actions gate)</strong>. We also chose the gate rule by replaying eight candidate rules against our own run history.</p>
 <p><img alt="Lifecycle map" src="file:///Users/admin/Desktop/Nikhil_Harsh_MLOPSPROJECT/reports/figures/lifecycle_map.png" /></p>
 <p>The figure maps every DevOps stage to a repository artefact (details: <code>docs/lifecycle.md</code>). Serving, live monitoring and a retrain scheduler are left out on purpose: the bank scores in batch, retrains monthly through a reviewed data PR, and has no live labels in this project. ML delivery differs from software delivery in five ways we had to design for:</p>
 <ul>
@@ -127,12 +127,19 @@ strong { color: #13232f; }
 <li>publishes a Markdown summary (checks, metric deltas, failing tests, provenance) to the job page and as a PR comment;</li>
 <li>fails the required check to block the merge.</li>
 </ol>
-<p>The baseline can change only through <code>scripts/update_baseline.py</code> (clean tree, mandatory reason) in a PR labelled <code>baseline-update</code>. There, a <code>baseline-guard</code> job retrains and requires an exact (1e-6) match, so a hand-lowered baseline cannot merge. CODEOWNERS and branch protection cover the rest. The CI history shows three PRs:</p>
+<p>The baseline can change only through <code>scripts/update_baseline.py</code> (clean tree, mandatory reason) in a PR labelled <code>baseline-update</code>. There, a <code>baseline-guard</code> job retrains and requires an exact (1e-6) match, so a hand-lowered baseline cannot merge. CODEOWNERS and branch protection cover the rest. The CI history on GitHub (https://github.com/tstnikhil4356/mlops-credit-risk-cicd-gate) shows:</p>
 <ul>
-<li>PR 1 passes (wider C grid);</li>
-<li>PR 2 is blocked because the model is worse (delay features dropped);</li>
-<li>PR 3 is blocked by the failing test <code>test_ratio_zero_limit_with_balance_is_capped</code>.</li>
+<li><strong>#1 passes and merges</strong> (wider C grid);</li>
+<li><strong>#2 is blocked because the model is worse</strong>: delay features dropped, all tests pass, but PR-AUC 0.7830 (−0.093) and recall 0.82;</li>
+<li><strong>#3 is blocked by failing tests</strong> (zero-limit contract) even though the metrics did not move;</li>
+<li>
+<h1>4 brings in dataset v2;</h1>
+</li>
+<li>
+<h1>5 updates the baseline, which <code>baseline-guard</code> rejected until it was labelled and then verified as reproducing exactly.</h1>
+</li>
 </ul>
+<p>Linux CI reproduces the macOS numbers exactly (≈1 min per run).</p>
 <h2>3. Choosing and defending the gate (Task 8)</h2>
 <p>We built a labelled history of 18 CI runs: five benign changes, seven harmful changes, and five seed changes as noise probes. Against it we replayed eight rules:</p>
 <table>
