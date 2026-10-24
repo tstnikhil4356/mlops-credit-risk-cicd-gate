@@ -47,14 +47,14 @@ Runtime: the CI training step takes ≈5–6 s (laptop) for 10 settings × 5 fol
 | A hand-edited or typo'd baseline | Exact reproducibility check, plus a "do not edit" header in the file |
 | An unreviewed change to the gate threshold or workflow | CODEOWNERS + "require review from Code Owners" |
 | Gradual drift (many small accepted drops) | Each PR is compared with the **fixed** baseline, not with the previous PR, so tolerance does not compound |
-| Gate bypassed by a direct push to main | Branch protection: PRs required, `quality-gate` and `baseline-guard` required, no force-push |
+| Gate bypassed by a direct push to main | Branch protection: `quality-gate` and `baseline-guard` required, branch must be up to date, **enforced for admins too**, no force-push or deletion |
 
 ### Branch protection (one-time setup, free on public repos)
 
 ```bash
 gh api -X PUT repos/<owner>/<repo>/branches/main/protection --input - <<'JSON'
 {"required_status_checks":{"strict":true,"contexts":["quality-gate","baseline-guard"]},
- "enforce_admins":false,"required_pull_request_reviews":null,
+ "enforce_admins":true,"required_pull_request_reviews":null,
  "restrictions":null,"allow_force_pushes":false,"allow_deletions":false}
 JSON
 gh label create baseline-update --color B60205 --description "PR intentionally changes the quality-gate baseline"

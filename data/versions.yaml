@@ -6,3 +6,7 @@ versions:
     label: v1
     rows: 800
     description: Initial dataset supplied with the brief (credit_card_customers_v1.csv)
+  7a0507101494c3b9bc10011bc4865a08:
+    label: v2
+    rows: 1100
+    description: v1 rows unchanged + 300 new customers (credit_card_customers_v2.csv)
