@@ -1,0 +1,18 @@
+# CI quality-gate configuration: the selected model family with a small grid,
+# 5-fold CV, deterministic seed. Must finish well inside gate.max_minutes.
+extends: base.yaml
+name: ci
+description: Configuration trained on every pull request by the quality gate
+training:
+  n_jobs: 2
+  candidates:
+    - name: logreg_ci
+      family: logistic_regression
+      params: {max_iter: 2000}
+      search_space:
+        C: [0.03, 0.1, 0.3, 1.0, 3.0]
+        class_weight: [null, balanced]
+tracking:
+  tracking_uri: sqlite:///mlflow.db
+  experiment_name: credit-risk-ci
+  log_model: true
