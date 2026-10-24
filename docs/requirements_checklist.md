@@ -1,6 +1,6 @@
 # Requirements checklist: every point of the brief → evidence
 
-Status legend: ✅ done and verified · 🔗 done on GitHub (CI history; links in `reports/ci/pr_history.md`)
+Status legend: ✅ done and verified · 🔗 verified on GitHub: https://github.com/tstnikhil4356/mlops-credit-risk-cicd-gate (links in `reports/ci/pr_history.md`)
 
 ## Task 1: Lifecycle map (Topic 1)
 
@@ -63,7 +63,7 @@ Status legend: ✅ done and verified · 🔗 done on GitHub (CI history; links i
 | Every run logged with parameters, metrics, dataset version, configuration and model artefact | ✅ | MLflow (`reports/tracking/all_runs.csv` columns `data_version`, `data_md5`, `has_model`, `has_config`) |
 | Final model selected with a metric justified for imbalanced data | ✅ | CV PR-AUC; `docs/metric_justification.md` |
 | Model registered | ✅ | `credit-risk-classifier` v1 `@champion`; `reports/tracking/registry.md` |
-| ≥ 10 tracked runs available for comparison | ✅ | 38 runs; `reports/tracking/model_comparison.md`; MLflow screenshots |
+| ≥ 10 tracked runs available for comparison | ✅ | 49 runs; `reports/tracking/model_comparison.md`; MLflow screenshots |
 | Comparison table + one-page justification of why accuracy is not sufficient | ✅ | `docs/metric_justification.md` |
 | Registered model traceable to code commit, data version and configuration | ✅ | model-version tags `git_commit`, `git_dirty`, `data_md5`, `data_version`, `config_sha256`; `reports/registry/registered_model.json` |
 
@@ -77,7 +77,7 @@ Status legend: ✅ done and verified · 🔗 done on GitHub (CI history; links i
 | Compares with a baseline stored in the repository | ✅ | `baseline/baseline_metrics.json`, `credit_risk/gate.py` |
 | Blocks the merge if quality falls or a test fails | ✅ 🔗 | final "Enforce" step + required status check (branch protection) |
 | Short run summary readable without opening logs | ✅ 🔗 | `$GITHUB_STEP_SUMMARY` + PR comment |
-| CI history shows three PRs: pass / fails (model worse) / fails (test fails) | 🔗 | `reports/ci/pr_history.md`, GitHub PRs 1–3 |
+| CI history shows three PRs: pass / fails (model worse) / fails (test fails) | ✅ 🔗 | [#1](https://github.com/tstnikhil4356/mlops-credit-risk-cicd-gate/pull/1) pass · [#2](https://github.com/tstnikhil4356/mlops-credit-risk-cicd-gate/pull/2) model worse · [#3](https://github.com/tstnikhil4356/mlops-credit-risk-cicd-gate/pull/3) test fails; `reports/ci/pr_history.md` |
 | Baseline update rule documented and protected against accidental changes | ✅ | `docs/ci_quality_gate.md`; `scripts/update_baseline.py`; `baseline-guard` job; CODEOWNERS; label rule |
 | Finishes in reasonable time with the CI configuration | ✅ 🔗 | ≈5 s training; `gate.max_minutes` budget enforced; Actions durations |
 
@@ -107,10 +107,10 @@ Status legend: ✅ done and verified · 🔗 done on GitHub (CI history; links i
 
 | Deliverable | Status | Where |
 |---|---|---|
-| Repository link with code, configuration, tests, workflow files, README | 🔗 | GitHub repository |
+| Repository link with code, configuration, tests, workflow files, README | ✅ | https://github.com/tstnikhil4356/mlops-credit-risk-cicd-gate |
 | Experiment-tracking evidence (screenshots or export) with ≥ 10 runs and the registered model | ✅ | `reports/tracking/screenshots/`, `all_runs.csv`, `registry.md` |
 | Lifecycle mapping diagram or table | ✅ | both |
-| CI history showing the three required PRs | 🔗 | GitHub + `reports/ci/pr_history.md` + `reports/ci/screenshots/` |
+| CI history showing the three required PRs | ✅ | GitHub + `reports/ci/pr_history.md` + `reports/ci/screenshots/` |
 | Feature documentation table and one-page metric justification | ✅ | `docs/features.md`, `docs/metric_justification.md` |
 | Threshold comparison table, subgroup breakdown, fairness-defense memo | ✅ | `docs/threshold_and_fairness.md`, `docs/gate_defense_memo.md` |
 | Short report (≤ 4 pages): design decisions + v1 vs v2 comparison | ✅ | `reports/report.pdf`, `reports/report.docx` (source `docs/report.md`) |

@@ -1,0 +1,1 @@
+{"allow_deletions":false,"allow_force_pushes":false,"enforce_admins":true,"required_status_checks":["quality-gate","baseline-guard"],"strict":true}

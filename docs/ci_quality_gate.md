@@ -21,13 +21,15 @@ Runtime: the CI training step takes ≈5–6 s (laptop) for 10 settings × 5 fol
 
 ## Required pull-request scenarios
 
-| PR | Change | Expected | Gate result |
+| PR | Change | Gate result on GitHub | Final state |
 |---|---|---|---|
-| PR 1 (pass) | `feat(config)`: wider C grid for logistic regression | pass | see [`reports/ci/pr_history.md`](../reports/ci/pr_history.md) |
-| PR 2 (fail: model worse) | `refactor(features)`: drop the payment-delay features "to simplify" | blocked: PR-AUC drop beyond tolerance | ″ |
-| PR 3 (fail: test) | `fix(features)`: treat a zero credit limit as zero utilisation | blocked: unit test `test_ratio_zero_limit_with_balance_is_capped` fails | ″ |
-| PR 4 (data drill) | `data`: dataset v2 enters via DVC | gate runs on new data; decision in [drill](data_change_drill.md) | ″ |
-| PR 5 (baseline) | `baseline`: adopt v2 baseline (label `baseline-update`) | baseline-guard verifies reproducibility | ″ |
+| [#1](https://github.com/tstnikhil4356/mlops-credit-risk-cicd-gate/pull/1) (pass) | `feat(config)`: wider C grid for logistic regression | ✅ tests 58/58, PR-AUC 0.8762 vs 0.8762, recall 0.9706 | **merged** |
+| [#2](https://github.com/tstnikhil4356/mlops-credit-risk-cicd-gate/pull/2) (fail: model worse) | `refactor(features)`: drop the payment-delay features "to simplify" | ✅ tests 58/58, ❌ PR-AUC 0.7830 (−0.0932), ❌ recall 0.8235 < 0.85; GitHub state **BLOCKED**, merge attempt refused | closed |
+| [#3](https://github.com/tstnikhil4356/mlops-credit-risk-cicd-gate/pull/3) (fail: test) | `fix(features)`: treat a zero credit limit as zero utilisation | ❌ 3 failing tests (`test_ratio_zero_limit_with_balance_is_capped`, …); model metrics unchanged; **BLOCKED** | closed |
+| [#4](https://github.com/tstnikhil4356/mlops-credit-risk-cicd-gate/pull/4) (data drill) | `data`: dataset v2 enters via DVC | ✅ PR-AUC 0.8997 vs 0.8762, plus a "data version differs" warning → decision from the [drill](data_change_drill.md) | **merged**, tag `data-v2` |
+| [#5](https://github.com/tstnikhil4356/mlops-credit-risk-cicd-gate/pull/5) (baseline) | `baseline`: adopt the v2 baseline | `baseline-guard` ❌ **without** the `baseline-update` label (BLOCKED) → label added → ✅ "reproduces exactly" | **merged** |
+
+Full history with links to every run and the posted summaries: [`reports/ci/pr_history.md`](../reports/ci/pr_history.md). Screenshots: [`reports/ci/screenshots/`](../reports/ci/screenshots). Applied protection settings: [`reports/ci/branch_protection.json`](../reports/ci/branch_protection.json). Each gate job took about 1 minute end to end on GitHub's runner (training step ≈3 s), and Linux CI reproduces the macOS numbers exactly.
 
 ## Baseline update rule (and how it is protected)
 
