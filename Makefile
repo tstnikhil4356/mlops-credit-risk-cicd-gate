@@ -1,10 +1,11 @@
 # One-command entry points. Every target is reproducible from a fresh clone.
 PY  ?= .venv/bin/python
 DVC ?= .venv/bin/dvc
+V2_REV ?= data-v2
 export PYTHONPATH := src
 
 .PHONY: help setup data test lint-config train-dev train-ci train-full gate experiments register \
-        gate-analysis fairness drill evidence screenshots reproduce restore-demo ui report clean-tracking
+        gate-analysis fairness drill evidence diagrams screenshots reproduce restore-demo ui report clean-tracking
 
 help:            ## List targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -50,15 +51,18 @@ fairness:        ## Task 8: subgroup error breakdown by Income_Bracket
 	$(PY) scripts/fairness_analysis.py
 
 drill:           ## Task 7: v1 vs v2 over five seeds
-	$(PY) scripts/data_drill.py --rev-a data-v1 --rev-b data-v2 --dvc $(DVC)
+	$(PY) scripts/data_drill.py --rev-a data-v1 --rev-b $(V2_REV) --dvc $(DVC)
 
 evidence:        ## Export tracking evidence (runs CSV, comparison, registry)
 	$(PY) scripts/export_tracking.py
 
+diagrams:        ## Lifecycle and CI-flow figures
+	$(PY) scripts/make_diagrams.py
+
 screenshots:     ## MLflow UI screenshots (needs Chrome)
 	scripts/screenshot_mlflow.sh
 
-reproduce: clean-tracking experiments register gate-analysis fairness drill evidence  ## Rebuild every reported result
+reproduce: clean-tracking experiments register gate-analysis fairness drill evidence diagrams  ## Rebuild every reported result
 
 restore-demo:    ## Task 2: restore an earlier commit + data and obtain the same result
 	scripts/restore_demo.sh baseline-v1

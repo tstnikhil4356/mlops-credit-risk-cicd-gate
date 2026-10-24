@@ -30,7 +30,7 @@ GATED_KEYS = ("average_precision", "roc_auc", "recall", "precision", "f2", "thre
 
 
 def _dirty() -> bool:
-    out = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], capture_output=True, text=True)
+    out = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no", "--", ".", ":(exclude)reports"], capture_output=True, text=True)
     return bool(out.stdout.strip())
 
 

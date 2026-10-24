@@ -18,8 +18,9 @@ def git_provenance() -> dict[str, str]:
     """Commit, branch and dirty state of the code that produced a run."""
     commit = os.environ.get("GITHUB_SHA") or _git("rev-parse", "HEAD") or "unknown"
     branch = os.environ.get("GITHUB_HEAD_REF") or _git("rev-parse", "--abbrev-ref", "HEAD") or "unknown"
-    # Untracked files (reports, scratch) do not change the code that ran; modified tracked files do.
-    dirty = bool(_git("status", "--porcelain", "--untracked-files=no"))
+    # Untracked files and generated evidence under reports/ do not change the code that ran;
+    # any other modified tracked file (code, config, data pointer) does.
+    dirty = bool(_git("status", "--porcelain", "--untracked-files=no", "--", ".", ":(exclude)reports"))
     return {"git_commit": commit, "git_branch": branch, "git_dirty": str(dirty).lower()}
 
 
