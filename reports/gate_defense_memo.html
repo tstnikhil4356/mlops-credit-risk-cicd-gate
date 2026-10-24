@@ -18,7 +18,7 @@ code { font-family: Menlo, monospace; font-size: 8pt; background: #f1f3f5; paddi
 blockquote { margin: 3pt 0; padding: 2pt 8pt; border-left: 3px solid #2a9d8f; background: #eef7f5; }
 strong { color: #13232f; }
 </style></head><body><h1>Quality-gate defense memo</h1>
-<p><strong>To:</strong> Risk team · <strong>From:</strong> MLOps engineering · <strong>Re:</strong> Which rule should block a monthly model change</p>
+<p><strong>To:</strong> Risk team · <strong>From:</strong> MLOps engineering (Nikhil Singh B042, Harsh Jain B059) · <strong>Re:</strong> Which rule should block a monthly model change</p>
 <p><strong>Recommendation.</strong> Block a pull request unless <strong>PR-AUC ≥ baseline − 0.02 AND recall at the tuned threshold ≥ 0.85</strong>, with tests passing (rule <strong>R8</strong>, <code>configs/base.yaml → gate</code>).</p>
 <p><strong>Evidence (our own 18 tracked gate-history runs; <a href="threshold_and_fairness.md">full table</a>).</strong> We replayed eight candidate rules against changes of known effect.</p>
 <ul>

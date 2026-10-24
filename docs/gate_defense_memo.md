@@ -1,6 +1,6 @@
 # Quality-gate defense memo
 
-**To:** Risk team · **From:** MLOps engineering · **Re:** Which rule should block a monthly model change
+**To:** Risk team · **From:** MLOps engineering (Nikhil Singh B042, Harsh Jain B059) · **Re:** Which rule should block a monthly model change
 
 **Recommendation.** Block a pull request unless **PR-AUC ≥ baseline − 0.02 AND recall at the tuned threshold ≥ 0.85**, with tests passing (rule **R8**, `configs/base.yaml → gate`).
 

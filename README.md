@@ -1,7 +1,7 @@
 # Credit Risk Model with a CI/CD Quality Gate
 
 *Elective II: Machine Learning Operations (MLOps), Project 1. Brief by Dr. Santosh Kumar.*
-*Team (pair): Nikhil · Harsh*
+*Team (pair): Nikhil Singh (B042) · Harsh Jain (B059)*
 
 A retail bank retrains its credit-card default model every month. This repository implements the workflow the risk team asked for:
 

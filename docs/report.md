@@ -1,6 +1,6 @@
 # Credit Risk Model with a CI/CD Quality Gate
 
-<p class="meta">MLOps (Elective II), Project 1 · Team: Nikhil &amp; Harsh · Syllabus topics 1, 2, 4, 10, 11, 12 · All results reproducible with <code>make setup data reproduce</code>; every number below is traceable to a tracked MLflow run (IDs in <code>reports/</code>).</p>
+<p class="meta">MLOps (Elective II), Project 1 · Team: Nikhil Singh (B042) &amp; Harsh Jain (B059) · Syllabus topics 1, 2, 4, 10, 11, 12 · All results reproducible with <code>make setup data reproduce</code>; every number below is traceable to a tracked MLflow run (IDs in <code>reports/</code>).</p>
 
 ## 1. Problem and what we built
 
