@@ -1,0 +1,150 @@
+# CI/CD quality gate (Task 6). Runs on every pull request to main:
+#   tests -> train with configs/ci.yaml -> compare with baseline -> publish summary -> block or allow merge.
+# Make `quality-gate` (and `baseline-guard`) required status checks in branch protection.
+name: quality-gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write   # sticky PR comment with the run summary
+
+concurrency:
+  group: quality-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check out DVC storage (orphan branch dvc-storage)
+        uses: actions/checkout@v4
+        with:
+          ref: dvc-storage
+          path: .dvc-storage
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.lock
+
+      - name: Install
+        run: |
+          pip install -r requirements.lock
+          pip install -e . --no-deps
+
+      - name: Pull data version referenced by this commit
+        run: |
+          dvc pull
+          python -c "from credit_risk.config import load_config; from credit_risk.data import data_version as v; print(v(load_config('configs/ci.yaml')))"
+
+      - name: Validate configuration files
+        run: |
+          for f in configs/*.yaml; do python -c "from credit_risk.config import load_config; c=load_config('$f'); print('valid:', '$f', c.sha256()[:10])"; done
+
+      - name: Unit tests
+        id: tests
+        continue-on-error: true   # outcome is reported in the summary; the final step enforces it
+        run: |
+          mkdir -p reports/ci
+          pytest --junitxml=reports/ci/junit.xml
+
+      - name: Train with CI configuration
+        id: train
+        continue-on-error: true
+        env:
+          MLFLOW_TRACKING_URI: sqlite:///mlflow.db
+        run: python -m credit_risk.train --config configs/ci.yaml --run-label "ci/pr-${{ github.event.pull_request.number || 'main' }}" --out reports/metrics/ci_metrics.json
+
+      - name: Compare with baseline (quality gate)
+        id: gate
+        continue-on-error: true
+        run: |
+          python -m credit_risk.gate --config configs/ci.yaml \
+            --candidate reports/metrics/ci_metrics.json \
+            --tests-junit reports/ci/junit.xml \
+            --tests-outcome "${{ steps.tests.outcome }}" \
+            --summary reports/ci/gate_summary.md
+
+      - name: Post summary on the pull request
+        if: always() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          { echo "<!-- quality-gate -->"; cat reports/ci/gate_summary.md; echo; echo "[Full run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"; } > comment.md
+          gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md --edit-last 2>/dev/null \
+            || gh pr comment ${{ github.event.pull_request.number }} --body-file comment.md
+
+      - name: Upload run evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-gate-evidence
+          path: |
+            reports/ci/
+            reports/metrics/ci_metrics.json
+            mlflow.db
+            mlruns/
+          if-no-files-found: warn
+
+      - name: Enforce gate decision
+        if: always()
+        run: |
+          echo "tests=${{ steps.tests.outcome }} train=${{ steps.train.outcome }} gate=${{ steps.gate.outcome }}"
+          test "${{ steps.tests.outcome }}" = "success" || { echo "::error::Unit tests failed - merge blocked"; exit 1; }
+          test "${{ steps.train.outcome }}" = "success" || { echo "::error::CI training failed - merge blocked"; exit 1; }
+          test "${{ steps.gate.outcome }}" = "success" || { echo "::error::Model is worse than the baseline - merge blocked"; exit 1; }
+          echo "Quality gate passed."
+
+  baseline-guard:
+    # Protects baseline/baseline_metrics.json against accidental or dishonest changes.
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect baseline change
+        id: diff
+        run: |
+          if git diff --name-only "origin/${{ github.base_ref }}...HEAD" | grep -qx 'baseline/baseline_metrics.json'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"; else echo "changed=false" >> "$GITHUB_OUTPUT"; fi
+      - name: No baseline change
+        if: steps.diff.outputs.changed == 'false'
+        run: echo "Baseline untouched by this PR." >> "$GITHUB_STEP_SUMMARY"
+      - name: Require the baseline-update label
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          if ! echo '${{ toJson(github.event.pull_request.labels.*.name) }}' | grep -q '"baseline-update"'; then
+            echo "::error::This PR modifies baseline/baseline_metrics.json but is not labelled 'baseline-update'. See docs/ci_quality_gate.md."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+        if: steps.diff.outputs.changed == 'true'
+        with:
+          ref: dvc-storage
+          path: .dvc-storage
+      - uses: actions/setup-python@v5
+        if: steps.diff.outputs.changed == 'true'
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.lock
+      - name: Verify the new baseline is reproducible from this PR
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          pip install -r requirements.lock && pip install -e . --no-deps
+          dvc pull
+          python scripts/update_baseline.py --check | tee -a "$GITHUB_STEP_SUMMARY"

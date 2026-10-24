@@ -1,0 +1,7 @@
+# Changes to the quality-gate baseline, gate configuration and CI workflow need
+# approval from the risk/MLOps owners (enable "Require review from Code Owners").
+/baseline/                      @tstnikhil4356
+/configs/ci.yaml                @tstnikhil4356
+/configs/base.yaml              @tstnikhil4356
+/.github/workflows/             @tstnikhil4356
+/data/raw/*.dvc                 @tstnikhil4356
