@@ -32,6 +32,10 @@ from credit_risk.tracking import flatten, git_provenance, setup_mlflow
 
 warnings.filterwarnings("ignore", category=UserWarning, module="mlflow")
 
+# Runtime requirements recorded with every logged model (subset of requirements.txt).
+MODEL_REQUIREMENTS = ["scikit-learn==1.5.2", "scipy==1.13.1", "pandas==2.2.3", "numpy==1.26.4", "pyyaml==6.0.2",
+                      "pydantic==2.9.2"]
+
 
 def _parse_overrides(pairs: list[str]) -> dict[str, Any]:
     out = {}
@@ -125,7 +129,11 @@ def _log_run(mlflow, cfg: Config, res: dict, tags: dict[str, str], X_test, run_n
         if cfg.tracking.log_model:
             example = X_test.head(5)
             signature = infer_signature(example, res["model"].predict_proba(example)[:, 1])
-            mlflow.sklearn.log_model(res["model"], artifact_path="model", signature=signature, input_example=example)
+            # Ship the package source with the model so it loads without `pip install credit-risk`.
+            mlflow.sklearn.log_model(
+                res["model"], artifact_path="model", signature=signature, input_example=example,
+                code_paths=[str(Path(__file__).resolve().parent)], pip_requirements=MODEL_REQUIREMENTS,
+            )
         return run.info.run_id
 
 
