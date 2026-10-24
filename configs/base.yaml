@@ -83,5 +83,5 @@ gate:
   metric: average_precision                        # primary gate metric (see docs/gate_defense_memo.md)
   max_drop: 0.02                                   # tolerated drop vs baseline before blocking
   guard_metric: recall                             # secondary guard at the tuned threshold
-  guard_min: 0.70
+  guard_min: 0.85                                  # rule R8, chosen in docs/gate_defense_memo.md
   max_minutes: 10                                  # CI time budget for the training step
