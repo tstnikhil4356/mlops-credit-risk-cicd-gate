@@ -1,0 +1,87 @@
+# Base configuration: every tunable value of the pipeline lives here.
+# Environment files (dev.yaml, ci.yaml, full.yaml) `extends:` this file and
+# override only what differs. The merged result is validated on load
+# (src/credit_risk/config.py) - unknown keys or bad values fail immediately.
+name: base
+description: Shared defaults for all environments
+seed: 42
+
+paths:
+  raw_data: data/raw/credit_card_customers.csv     # DVC-tracked
+  data_versions: data/versions.yaml                # md5 -> human label (v1, v2)
+  artifacts_dir: artifacts                         # local run outputs (git-ignored)
+  reports_dir: reports
+  baseline: baseline/baseline_metrics.json         # quality-gate reference (protected)
+
+data:
+  target: High_Risk_Customer
+  id_column: Customer_ID                           # identifier: never used as a feature
+  numeric_columns: [Age, Credit_Limit, Current_Balance, Monthly_Spend,
+                    Num_Transactions_Monthly, Payment_Delay_Days, Tenure_Months]
+  categorical_columns: [Income_Bracket]
+  income_categories: [Low, Medium, High]           # ordered -> ordinal encoding
+  test_size: 0.25                                  # hash-based, stable per Customer_ID
+  max_missing_fraction: 0.10                       # data validation: fail above this per column
+
+features:
+  utilisation_risk_cutoff: 0.80                    # balance/limit at or above this => flag
+  payment_delay_flag_days: 7                       # avg delay above this => late payer
+  age_bins: [0, 30, 45, 60, 120]
+  age_labels: [under_30, "30_44", "45_59", 60_plus]
+  impute_strategy: median                          # learned on training rows only
+  add_missing_indicator: true                      # adds record_incomplete flag
+  drop_features: []                                # ablations: names removed before modelling
+
+training:
+  cv_folds: 5
+  selection_metric: average_precision              # PR-AUC: see docs/metric_justification.md
+  search: grid
+  n_iter: 20                                       # used only when search == random
+  threshold_strategy: max_fbeta                    # decision threshold tuned on CV out-of-fold scores
+  threshold_beta: 2.0                              # F2: a missed defaulter costs more than a false alarm
+  fixed_threshold: 0.5                             # used only when threshold_strategy == fixed
+  n_jobs: -1
+  candidates:
+    - name: dummy_prior
+      family: dummy
+      params: {strategy: prior}
+    - name: logreg_default
+      family: logistic_regression
+      params: {C: 1.0, max_iter: 2000}
+    - name: logreg_tuned
+      family: logistic_regression
+      params: {max_iter: 2000}
+      search_space:
+        C: [0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0]
+        class_weight: [null, balanced]
+    - name: random_forest_tuned
+      family: random_forest
+      params: {n_estimators: 300}
+      search_space:
+        max_depth: [3, 5, 8, null]
+        min_samples_leaf: [1, 5, 15]
+        max_features: [sqrt, 0.5]
+        class_weight: [null, balanced_subsample]
+    - name: hist_gb_tuned
+      family: hist_gradient_boosting
+      params: {early_stopping: false}
+      search_space:
+        learning_rate: [0.03, 0.1]
+        max_depth: [2, 3, 5]
+        max_iter: [100, 300]
+        l2_regularization: [0.0, 1.0]
+        class_weight: [null, balanced]
+
+tracking:
+  enabled: true
+  tracking_uri: sqlite:///mlflow.db
+  experiment_name: credit-risk
+  registered_model_name: credit-risk-classifier
+  log_model: true
+
+gate:
+  metric: average_precision                        # primary gate metric (see docs/gate_defense_memo.md)
+  max_drop: 0.02                                   # tolerated drop vs baseline before blocking
+  guard_metric: recall                             # secondary guard at the tuned threshold
+  guard_min: 0.70
+  max_minutes: 10                                  # CI time budget for the training step

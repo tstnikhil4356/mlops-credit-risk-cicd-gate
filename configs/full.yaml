@@ -1,0 +1,4 @@
+# Full model-selection campaign: every candidate family with its complete grid.
+extends: base.yaml
+name: full
+description: Full tuning across all model families (used for model selection and registry)

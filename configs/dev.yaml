@@ -1,0 +1,16 @@
+# Fast local iteration: one quick model, 3-fold CV, separate experiment.
+extends: base.yaml
+name: dev
+description: Fast development loop (seconds), not used for decisions
+training:
+  cv_folds: 3
+  candidates:
+    - name: logreg_dev
+      family: logistic_regression
+      params: {max_iter: 2000}
+      search_space:
+        C: [0.1, 1.0]
+        class_weight: [balanced]
+tracking:
+  experiment_name: credit-risk-dev
+  log_model: false
