@@ -19,6 +19,8 @@ A retail bank retrains its credit-card default model every month. This repositor
 
 All tools are free and open source; no cloud account or secret is needed.
 
+**▶ Demo presentation:** https://tstnikhil4356.github.io/mlops-credit-risk-cicd-gate/ (keys: → next · N speaker notes · T timer · F fullscreen)
+
 ## Results at a glance
 
 | | |
@@ -128,7 +130,7 @@ All runs are deterministic (pinned lock file, seeded split, CV and models), so `
 | Feature documentation table + one-page metric justification | [`docs/features.md`](docs/features.md), [`docs/metric_justification.md`](docs/metric_justification.md) |
 | Threshold comparison, subgroup breakdown, fairness-defense memo | [`docs/threshold_and_fairness.md`](docs/threshold_and_fairness.md), [`docs/gate_defense_memo.md`](docs/gate_defense_memo.md) |
 | Short report (≤ 4 pages) | [`docs/report.md`](docs/report.md) → [`reports/report.pdf`](reports/report.pdf) / [`.docx`](reports/report.docx) |
-| 5-minute demonstration | [`docs/demo_script.md`](docs/demo_script.md) |
+| 5-minute demonstration | **[Live presentation site](https://tstnikhil4356.github.io/mlops-credit-risk-cicd-gate/)** (source `site/`, deployed by `.github/workflows/pages.yml`) · script [`docs/demo_script.md`](docs/demo_script.md) |
 | Requirement-by-requirement traceability | [`docs/requirements_checklist.md`](docs/requirements_checklist.md) |
 
 Task-specific design documents: [configuration](docs/configuration.md) · [data versioning & restore](docs/data_versioning.md) · [data-change drill](docs/data_change_drill.md) · [references & citations](docs/references.md).

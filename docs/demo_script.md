@@ -1,5 +1,18 @@
 # 5-minute demonstration script
 
+**Presentation site:** https://tstnikhil4356.github.io/mlops-credit-risk-cicd-gate/. One screen per segment below, in the same order and timing.
+
+| Key | Action |
+|---|---|
+| → / Space / Enter | next screen |
+| ← | previous screen |
+| T | start/pause the 5:00 timer (it turns red with "move on →" if you are behind schedule); R resets |
+| N | speaker notes: the exact lines to say for the current screen |
+| F | fullscreen |
+| `#N` in the URL | jump to screen N (e.g. `…/#6` for the CI gate) |
+
+Tip for screen sharing: open the site twice, one window shared with notes off, and one on your own screen with **N** on as a teleprompter. Navigate both together, or keep the teleprompter on the same slide number.
+
 Setup before recording: `make setup data`, `make reproduce` done; MLflow UI open (`make ui`); browser tabs open on the repository's *Pull requests* and *Actions* pages; a terminal in the repo root.
 
 | Time | Show | Say (key points) | Command / screen |
