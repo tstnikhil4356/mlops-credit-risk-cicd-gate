@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+
+# Local tracking store & run outputs (exported evidence lives in reports/)
+mlflow.db
+mlruns/
+mlartifacts/
+artifacts/
+outputs/
+
+# DVC storage worktree (content-addressed remote, lives on the `dvc-storage` branch)
+.dvc-storage/
+
+# Instructor-supplied originals: they enter the project only through DVC (data/raw)
+datasets/
+*.docx
+!reports/*.docx
+~$*
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
