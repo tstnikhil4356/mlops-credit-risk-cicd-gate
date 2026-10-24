@@ -86,7 +86,14 @@ def main() -> int:
     tmp = Path("artifacts/drill")
     paths = {"A": materialise(args.rev_a, tmp / "data_a.csv", args.dvc),
              "B": materialise(args.rev_b, tmp / "data_b.csv", args.dvc)}
-    versions = {k: data_version(cfg, p) for k, p in paths.items()}
+    # Each revision carries its own md5 -> label registry (v2 is only registered on the v2 branch).
+    versions = {}
+    for key, rev in (("A", args.rev_a), ("B", args.rev_b)):
+        registry = subprocess.run(["git", "show", f"{rev}:{cfg.paths.data_versions}"], capture_output=True,
+                                  text=True, check=True).stdout
+        reg_path = tmp / f"versions_{key}.yaml"
+        reg_path.write_text(registry)
+        versions[key] = data_version(cfg.with_overrides(**{"paths.data_versions": str(reg_path)}), paths[key])
     frames = {k: pd.read_csv(p) for k, p in paths.items()}
     la, lb = versions["A"].label, versions["B"].label
     print(f"A = {args.rev_a}: {la} {versions['A'].md5[:8]} ({versions['A'].rows} rows)")
@@ -97,7 +104,8 @@ def main() -> int:
     for seed in args.seeds:
         res = {}
         for key in ("A", "B"):
-            s = run_training(cfg, data_path=str(paths[key]), seed=seed, run_label=f"drill/{versions[key].label}",
+            run_cfg = cfg.with_overrides(**{"paths.data_versions": str(tmp / f"versions_{key}.yaml")})
+            s = run_training(run_cfg, data_path=str(paths[key]), seed=seed, run_label=f"drill/{versions[key].label}",
                              extra_tags={"drill_rev": args.rev_a if key == "A" else args.rev_b})
             res[key] = s
         objs = {k: res[k]["_objects"] for k in res}
