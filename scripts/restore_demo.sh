@@ -26,9 +26,9 @@ mkdir -p "$(dirname "$LOG")"
   git fetch -q origin dvc-storage:dvc-storage && git worktree add -q .dvc-storage dvc-storage
   "$DVC" pull -q
   echo "data md5   : $(md5 -q data/raw/credit_card_customers.csv 2>/dev/null || md5sum data/raw/credit_card_customers.csv | cut -d' ' -f1)"
-  PYTHONPATH=src "$PY" -m credit_risk.train --config configs/ci.yaml --no-tracking --out /tmp/restore_metrics.json 2>&1 | grep '\[train\]'
-  PYTHONPATH=src "$PY" scripts/update_baseline.py --check --candidate /tmp/restore_metrics.json
+  PYTHONPATH=src "$PY" -m credit_risk.train --config configs/ci.yaml --no-tracking --out "$WORK.metrics.json" 2>&1 | grep '\[train\]'
+  PYTHONPATH=src "$PY" scripts/update_baseline.py --check --candidate "$WORK.metrics.json"
   echo "recorded   : $(PYTHONPATH=src "$PY" -c "import json;b=json.load(open('baseline/baseline_metrics.json'));print('AP=%.6f recall=%.6f data=%s' % (b['metrics']['average_precision'], b['metrics']['recall'], b['data_version']))")"
-  echo "reproduced : $(PYTHONPATH=src "$PY" -c "import json;b=json.load(open('/tmp/restore_metrics.json'));print('AP=%.6f recall=%.6f data=%s' % (b['metrics']['average_precision'], b['metrics']['recall'], b['data_version']))")"
+  echo "reproduced : $(PYTHONPATH=src "$PY" -c "import json;b=json.load(open('$WORK.metrics.json'));print('AP=%.6f recall=%.6f data=%s' % (b['metrics']['average_precision'], b['metrics']['recall'], b['data_version']))")"
 } 2>&1 | grep -v -i "warning" | tee "$LOG"
 rm -rf "$(dirname "$WORK")"
