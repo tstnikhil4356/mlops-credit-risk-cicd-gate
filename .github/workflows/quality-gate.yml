@@ -6,6 +6,7 @@ name: quality-gate
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled]   # re-check when the baseline-update label changes
   push:
     branches: [main]
   workflow_dispatch:
