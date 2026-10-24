@@ -14,13 +14,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import os
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from credit_risk.config import load_config
+from credit_risk.config import ConfigError, load_config
 
 
 @dataclass
@@ -221,4 +222,8 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except ConfigError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        raise SystemExit(2) from None

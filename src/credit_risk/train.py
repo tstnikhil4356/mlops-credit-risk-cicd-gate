@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import time
 import warnings
 from pathlib import Path
@@ -24,7 +25,7 @@ import pandas as pd
 import yaml
 from sklearn.model_selection import GridSearchCV, ParameterGrid, RandomizedSearchCV, StratifiedKFold, cross_val_predict, cross_val_score
 
-from credit_risk.config import Config, load_config
+from credit_risk.config import Config, ConfigError, load_config
 from credit_risk.data import data_version, load_raw, train_test_split_by_id
 from credit_risk.evaluate import best_fbeta_threshold, classification_metrics
 from credit_risk.models import build_pipeline, search_grid
@@ -245,4 +246,8 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except ConfigError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        raise SystemExit(2) from None
