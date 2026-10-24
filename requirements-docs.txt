@@ -1,0 +1,4 @@
+# Only needed to build the PDF/DOCX report (scripts/build_report.py); not used by the pipeline or CI.
+Markdown==3.7
+python-docx==1.1.2
+playwright==1.48.0  # MLflow UI screenshots (uses the installed Chrome, no browser download)

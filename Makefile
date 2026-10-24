@@ -60,7 +60,7 @@ diagrams:        ## Lifecycle and CI-flow figures
 	$(PY) scripts/make_diagrams.py
 
 screenshots:     ## MLflow UI screenshots (needs Chrome)
-	scripts/screenshot_mlflow.sh
+	$(PY) scripts/screenshot_mlflow.py
 
 reproduce: clean-tracking experiments register gate-analysis fairness drill evidence diagrams  ## Rebuild every reported result
 
