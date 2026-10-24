@@ -207,40 +207,40 @@ strong { color: #13232f; }
 <tbody>
 <tr>
 <td>Own test split (what CI sees)</td>
-<td>+0.0066</td>
-<td>0.0268</td>
+<td>+0.0068</td>
+<td>0.0280</td>
 <td>3/5</td>
-<td>0.61</td>
+<td>0.62</td>
 </tr>
 <tr>
 <td>Identical v1 test customers</td>
-<td>−0.0004</td>
-<td>0.0126</td>
+<td>+0.0002</td>
+<td>0.0144</td>
 <td>2/5</td>
-<td>0.95</td>
+<td>0.97</td>
 </tr>
 <tr>
 <td>New-customer test rows</td>
-<td>+0.0083</td>
-<td>0.0056</td>
+<td>+0.0108</td>
+<td>0.0079</td>
 <td>5/5</td>
-<td>0.03</td>
+<td>0.04</td>
 </tr>
 <tr>
 <td>Recall, own split</td>
-<td>−0.0351</td>
-<td>0.0556</td>
-<td>1/5</td>
-<td>0.23</td>
+<td>−0.0438</td>
+<td>0.0544</td>
+<td>0/5</td>
+<td>0.15</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Findings.</strong></p>
 <ul>
 <li>On the gate's seed, v2 scores PR-AUC 0.8997 against the baseline's 0.8762 (+0.0235), and the gate passes it.</li>
-<li>That apparent gain is not real. Over seeds it is +0.007 ± 0.027, the same size as pure seed noise (sd 0.025). On identical customers the models are indistinguishable, and every seed's paired-bootstrap 95% interval contains 0.</li>
+<li>That apparent gain is not real. Over seeds it is +0.007 ± 0.028, the same size as pure seed noise (sd 0.025). On identical customers the models are indistinguishable, and every seed's paired-bootstrap 95% interval contains 0.</li>
 <li>Most of the +0.0235 comes from a different, easier test set: the v1 model already reaches 0.93 on the new customers.</li>
-<li>The only consistent gain is small and expected (+0.008 on new customers).</li>
+<li>The only consistent gain is small and expected (+0.011 on new customers, 5/5 seeds).</li>
 <li>Drift is minor: the new customers are slightly older (KS p = 0.007, PSI 0.095) and identical on financial features and default rate.</li>
 </ul>
 <p><strong>Conclusion: the gate should accept the v2 model as "not worse", not as "better".</strong> It is equivalent on known customers, slightly better on the new segment, trained on 37.5% more and fresher data, and representative of the current population. We merge it and move the baseline in a separate <code>baseline-update</code> PR whose reason cites this drill, without claiming a +0.024 improvement. Recall at the F2-tuned threshold fell below 0.85 for two of five seeds, so the next data month is the first place to watch.</p>

@@ -110,17 +110,17 @@ Dataset v2 (v1 plus 300 new customers) went through the same CI configuration. B
 
 | v2 − v1 (PR-AUC) | Mean | SD (seeds) | v2 better | p (paired t) |
 |---|---|---|---|---|
-| Own test split (what CI sees) | +0.0066 | 0.0268 | 3/5 | 0.61 |
-| Identical v1 test customers | −0.0004 | 0.0126 | 2/5 | 0.95 |
-| New-customer test rows | +0.0083 | 0.0056 | 5/5 | 0.03 |
-| Recall, own split | −0.0351 | 0.0556 | 1/5 | 0.23 |
+| Own test split (what CI sees) | +0.0068 | 0.0280 | 3/5 | 0.62 |
+| Identical v1 test customers | +0.0002 | 0.0144 | 2/5 | 0.97 |
+| New-customer test rows | +0.0108 | 0.0079 | 5/5 | 0.04 |
+| Recall, own split | −0.0438 | 0.0544 | 0/5 | 0.15 |
 
 **Findings.**
 
 - On the gate's seed, v2 scores PR-AUC 0.8997 against the baseline's 0.8762 (+0.0235), and the gate passes it.
-- That apparent gain is not real. Over seeds it is +0.007 ± 0.027, the same size as pure seed noise (sd 0.025). On identical customers the models are indistinguishable, and every seed's paired-bootstrap 95% interval contains 0.
+- That apparent gain is not real. Over seeds it is +0.007 ± 0.028, the same size as pure seed noise (sd 0.025). On identical customers the models are indistinguishable, and every seed's paired-bootstrap 95% interval contains 0.
 - Most of the +0.0235 comes from a different, easier test set: the v1 model already reaches 0.93 on the new customers.
-- The only consistent gain is small and expected (+0.008 on new customers).
+- The only consistent gain is small and expected (+0.011 on new customers, 5/5 seeds).
 - Drift is minor: the new customers are slightly older (KS p = 0.007, PSI 0.095) and identical on financial features and default rate.
 
 **Conclusion: the gate should accept the v2 model as "not worse", not as "better".** It is equivalent on known customers, slightly better on the new segment, trained on 37.5% more and fresher data, and representative of the current population. We merge it and move the baseline in a separate `baseline-update` PR whose reason cites this drill, without claiming a +0.024 improvement. Recall at the F2-tuned threshold fell below 0.85 for two of five seeds, so the next data month is the first place to watch.
