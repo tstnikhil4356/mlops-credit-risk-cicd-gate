@@ -26,7 +26,7 @@ All tools are free and open source; no cloud account or secret is needed.
 | Registered model | `credit-risk-classifier` v1 `@champion`: tuned logistic regression, CV PR-AUC **0.873**, test PR-AUC **0.876**, recall **0.97** at the F2-tuned threshold ([registry record](reports/registry/registered_model.json)) |
 | Tracked runs | 38 runs across selection, ablation, gate history, drill and baseline ([all runs](reports/tracking/all_runs.csv)) |
 | Gate rule | `PR-AUC ≥ baseline − 0.02 AND recall ≥ 0.85`: the only one of 8 candidate rules with 0 false blocks and 0 false accepts on our history ([memo](docs/gate_defense_memo.md)) |
-| v1 → v2 | +0.0235 on the CI seed, but −0.0004 ± 0.013 on identical customers over 5 seeds: **accept as "not worse", not as "better"** ([drill](docs/data_change_drill.md)) |
+| v1 → v2 | +0.0235 on the CI seed, but +0.0002 ± 0.014 on identical customers over 5 seeds: **accept as "not worse", not as "better"** ([drill](docs/data_change_drill.md)) |
 | Fairness | Income-group error gaps of 5–7 points, inside overlapping CIs, unchanged without the income feature: acceptable, monitored ([analysis](docs/threshold_and_fairness.md)) |
 
 ## Quick start (fresh clone)
