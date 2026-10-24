@@ -1,0 +1,10 @@
+{
+  "registered_model": "credit-risk-classifier",
+  "version": 1,
+  "run_id": "8226855713d9416faf519b5c38c99b15",
+  "threshold": 0.132566,
+  "seed": 42,
+  "data_version": "v1",
+  "oof_fpr_gap": 0.05233265720081137,
+  "oof_fnr_gap": 0.06538734896943851
+}

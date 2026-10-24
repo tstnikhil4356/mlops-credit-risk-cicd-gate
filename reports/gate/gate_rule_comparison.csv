@@ -1,0 +1,9 @@
+rule,benign accepted,noise probes accepted,harmful rejected,false blocks (benign),false accepts (harmful),harmful accepted,benign blocked
+R1 accuracy >= baseline,5/5,5/5,2/7,0,5,"drop-delay-signal, raw-features-only, shallow-tree-model, threshold-0.5, threshold-0.7",-
+R2 ROC-AUC >= baseline - 0.01,5/5,2/5,5/7,0,2,"threshold-0.5, threshold-0.7",-
+R3 PR-AUC >= baseline (strict),3/5,1/5,5/7,2,2,"threshold-0.5, threshold-0.7","cutoff-0.75, impute-mean"
+R4 PR-AUC >= baseline - 0.02,5/5,3/5,5/7,0,2,"threshold-0.5, threshold-0.7",-
+R5 PR-AUC >= baseline - 0.05,5/5,5/5,5/7,0,2,"threshold-0.5, threshold-0.7",-
+R6 F2 >= baseline - 0.02,5/5,4/5,6/7,0,1,raw-features-only,-
+R7 PR-AUC >= b - 0.02 AND recall >= 0.70,5/5,3/5,6/7,0,1,threshold-0.5,-
+R8 PR-AUC >= b - 0.02 AND recall >= 0.85,5/5,2/5,7/7,0,0,-,-

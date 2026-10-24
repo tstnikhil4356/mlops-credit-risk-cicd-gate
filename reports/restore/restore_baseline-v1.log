@@ -1,0 +1,11 @@
+== restore demo: ref=baseline-v1  (2026-10-24T16:08:09Z)
+commit     : 003731f5be8bc0bb608ac8b77b4c97c49e9f8505
+data .dvc  : - md5: 107f23e3bb76e1e34faaf8ddcc25a8e0
+  hash: md5
+data md5   : 107f23e3bb76e1e34faaf8ddcc25a8e0
+[train] config=ci sha=88da138dd9 seed=42
+[train] data=v1 (107f23e3) commit=003731f5 selected=logreg_ci test_AP=0.8762 in 4.82s
+[train] summary -> /tmp/restore_metrics.json
+Baseline reproduces exactly from this commit's code, config and data.
+recorded   : AP=0.876207 recall=0.970588 data=v1
+reproduced : AP=0.876207 recall=0.970588 data=v1

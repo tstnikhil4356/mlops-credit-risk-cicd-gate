@@ -1,0 +1,252 @@
+<!doctype html><html><head><meta charset='utf-8'><title>report</title><style>
+@page { size: A4; margin: 15mm 15mm 14mm 15mm; }
+body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 9.6pt; line-height: 1.38; color: #1d2731; }
+h1 { font-size: 16pt; margin: 0 0 2pt 0; color: #264653; }
+h2 { font-size: 11.5pt; margin: 9pt 0 3pt 0; color: #264653; border-bottom: 1px solid #d5dde3; padding-bottom: 1pt; }
+h3 { font-size: 10pt; margin: 6pt 0 2pt 0; color: #2a6f66; }
+p { margin: 2pt 0 4pt 0; text-align: justify; }
+ul, ol { margin: 2pt 0 4pt 0; padding-left: 15pt; }
+li { margin: 0 0 1.5pt 0; }
+table { border-collapse: collapse; width: 100%; margin: 3pt 0 5pt 0; font-size: 8.3pt; }
+th { background: #264653; color: white; text-align: left; padding: 2pt 4pt; font-weight: 600; }
+td { border-bottom: 1px solid #e3e8ec; padding: 1.6pt 4pt; vertical-align: top; }
+tr:nth-child(even) td { background: #f6f8f9; }
+img { max-width: 100%; display: block; margin: 3pt auto; }
+img.half { max-width: 49%; display: inline-block; }
+code { font-family: Menlo, monospace; font-size: 8pt; background: #f1f3f5; padding: 0 2pt; border-radius: 2px; }
+.meta { color: #5c6b77; font-size: 8.6pt; margin-bottom: 5pt; }
+blockquote { margin: 3pt 0; padding: 2pt 8pt; border-left: 3px solid #2a9d8f; background: #eef7f5; }
+strong { color: #13232f; }
+</style></head><body><h1>Credit Risk Model with a CI/CD Quality Gate</h1>
+<p class="meta">MLOps (Elective II), Project 1 · Team: Nikhil &amp; Harsh · Syllabus topics 1, 2, 4, 10, 11, 12 · All results reproducible with <code>make setup data reproduce</code>; every number below is traceable to a tracked MLflow run (IDs in <code>reports/</code>).</p>
+
+<h2>1. Problem and what we built</h2>
+<p>An untested change lowered a monthly credit-default model's quality for two weeks, and nobody could say which code, configuration or data produced it. We built a workflow in which <strong>every change is versioned (Git + DVC), validated (Pydantic configs, data contract), tested (58 pytest tests), tracked (MLflow, 38 runs) and accepted only if a retrained model is not worse than a protected baseline (GitHub Actions gate)</strong>. We also chose the gate rule by replaying eight candidate rules against our own run history.</p>
+<p><img alt="Lifecycle map" src="file:///Users/admin/Desktop/Nikhil_Harsh_MLOPSPROJECT/reports/figures/lifecycle_map.png" /></p>
+<p>The figure maps every DevOps stage to a repository artefact (details: <code>docs/lifecycle.md</code>). Serving, live monitoring and a retrain scheduler are left out on purpose: the bank scores in batch, retrains monthly through a reviewed data PR, and has no live labels in this project. ML delivery differs from software delivery in five ways we had to design for:</p>
+<ul>
+<li>behaviour depends on data as well as code;</li>
+<li>passing tests does not mean a good model (dropping the delay features passed every test but lost 0.093 PR-AUC);</li>
+<li>metrics are noisy, so tolerances must be measured;</li>
+<li>the release unit is a trained pipeline plus its threshold, which needs lineage;</li>
+<li>quality decays as populations drift.</li>
+</ul>
+<h2>2. Design decisions</h2>
+<p><strong>Versioning (Task 2).</strong></p>
+<ul>
+<li>Git holds code, configuration and a DVC pointer (<code>data/raw/credit_card_customers.csv.dvc</code>); the CSV is never in Git history.</li>
+<li>The DVC remote is content-addressed storage on an orphan branch, <code>dvc-storage</code>, which CI reads with the built-in token. This is free, has no secrets, and works from a fresh clone. It can be swapped for S3 with one command.</li>
+<li><code>data/versions.yaml</code> maps md5 → <code>v1</code>/<code>v2</code>. Tags mark restore points.</li>
+<li><code>scripts/restore_demo.sh</code> clones tag <code>baseline-v1</code> into a temporary directory, pulls its data and retrains. It reproduces the recorded PR-AUC <strong>0.876207</strong> and recall <strong>0.970588</strong> exactly.</li>
+<li>Version 2 entered through PR "data: dataset v2" as a two-line pointer diff.</li>
+</ul>
+<p><strong>Configuration (Task 3).</strong></p>
+<ul>
+<li><code>base.yaml</code> holds every tunable value: paths, utilisation cut-off, delay flag, age bins, imputation, search spaces, seed, tracking, gate.</li>
+<li><code>dev</code>, <code>ci</code> and <code>full</code> extend it.</li>
+<li>A strict Pydantic schema rejects unknown keys (a typo such as <code>utilization_…</code> fails immediately), wrong types, out-of-range values and inconsistent bins, listing every offending field (exit code 2).</li>
+<li>Each run logs the resolved config as an artefact plus its SHA-256, so the configuration of any result is recoverable.</li>
+</ul>
+<p><strong>Cleaning and features (Task 4).</strong></p>
+<ul>
+<li>The missing values in <code>Credit_Limit</code>, <code>Current_Balance</code> and <code>Payment_Delay_Days</code> occur in the <strong>same 24 rows</strong> with a normal default rate. We impute training-set medians inside the pipeline and add a <code>record_incomplete</code> flag.</li>
+<li>Engineered features:<ul>
+<li><code>utilisation</code> (ratio; largest coefficient);</li>
+<li><code>spend_to_limit</code> and <code>spend_per_transaction</code>;</li>
+<li><code>high_utilisation_flag</code> (≥ 0.80, configurable) and <code>late_payer_flag</code> (&gt; 7 days);</li>
+<li><code>age_band</code> (binned, one-hot; captures a non-linear age effect);</li>
+<li>our own <code>credit_stress_index</code> = utilisation × log(1 + delay), for compounding stress.</li>
+</ul>
+</li>
+<li>Edge cases are defined and tested: a zero or negative credit limit gives the capped ratio, and zero transactions are clipped.</li>
+<li>Leakage is prevented by construction: the target is rejected by the builder, <code>Customer_ID</code> is ignored (tested invariance), and all statistics are fitted per fold.</li>
+<li>The whole pipeline is one scikit-learn object, so training, CI and <code>predict.py</code> are identical.</li>
+<li>Ablations: engineered features add +0.079 CV PR-AUC, mostly through the ratios. <strong>Our own feature adds no measurable lift (+0.002 when removed, inside the 0.04 fold sd)</strong>. We report this rather than overclaim.</li>
+</ul>
+<p><strong>Training, metric and registry (Task 5).</strong> 20% positives make accuracy misleading. Predicting "nobody defaults" scores <strong>81.7%</strong> accuracy on our test split, <em>higher</em> than our model's 81.2%, while catching 0 of 34 defaulters (we catch 33). We therefore:</p>
+<ul>
+<li>select models by <strong>cross-validated PR-AUC on the training split</strong>;</li>
+<li>set the decision threshold by maximising <strong>F2</strong> on out-of-fold scores, because missed defaulters cost more than reviews;</li>
+<li>report recall, precision, ROC-AUC and Brier score.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>CV PR-AUC ± sd</th>
+<th>Test PR-AUC</th>
+<th>Test recall</th>
+<th>Test precision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dummy (prior)</td>
+<td>0.191 ± 0.004</td>
+<td>0.183</td>
+<td>1.000</td>
+<td>0.183</td>
+</tr>
+<tr>
+<td>Logistic regression (C = 1)</td>
+<td>0.866 ± 0.036</td>
+<td>0.884</td>
+<td>0.971</td>
+<td>0.635</td>
+</tr>
+<tr>
+<td><strong>Logistic regression, tuned (selected)</strong></td>
+<td><strong>0.873 ± 0.040</strong></td>
+<td>0.876</td>
+<td>0.971</td>
+<td>0.493</td>
+</tr>
+<tr>
+<td>Random forest, tuned (48 settings)</td>
+<td>0.852 ± 0.053</td>
+<td>0.788</td>
+<td>0.824</td>
+<td>0.596</td>
+</tr>
+<tr>
+<td>Gradient boosting, tuned (48 settings)</td>
+<td>0.852 ± 0.051</td>
+<td>0.781</td>
+<td>0.853</td>
+<td>0.580</td>
+</tr>
+</tbody>
+</table>
+<p>The tree ensembles overfit 600 training rows. The selected run is registered as <code>credit-risk-classifier</code> v1 (alias <code>@champion</code>), with tags for git commit, <code>git_dirty=false</code>, data md5/version, config name/hash and seed. Logged models bundle their source code and pinned requirements.</p>
+<p><strong>Quality gate (Task 6).</strong> On every PR the workflow:</p>
+<ol>
+<li>pulls the PR's data version;</li>
+<li>validates the configs and runs pytest;</li>
+<li>trains <code>ci.yaml</code> (≈5 s);</li>
+<li>compares with <code>baseline/baseline_metrics.json</code>;</li>
+<li>publishes a Markdown summary (checks, metric deltas, failing tests, provenance) to the job page and as a PR comment;</li>
+<li>fails the required check to block the merge.</li>
+</ol>
+<p>The baseline can change only through <code>scripts/update_baseline.py</code> (clean tree, mandatory reason) in a PR labelled <code>baseline-update</code>. There, a <code>baseline-guard</code> job retrains and requires an exact (1e-6) match, so a hand-lowered baseline cannot merge. CODEOWNERS and branch protection cover the rest. The CI history shows three PRs:</p>
+<ul>
+<li>PR 1 passes (wider C grid);</li>
+<li>PR 2 is blocked because the model is worse (delay features dropped);</li>
+<li>PR 3 is blocked by the failing test <code>test_ratio_zero_limit_with_balance_is_capped</code>.</li>
+</ul>
+<h2>3. Choosing and defending the gate (Task 8)</h2>
+<p>We built a labelled history of 18 CI runs: five benign changes, seven harmful changes, and five seed changes as noise probes. Against it we replayed eight rules:</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Benign accepted</th>
+<th>Harmful rejected</th>
+<th>Lets through</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1 accuracy ≥ baseline</td>
+<td>5/5</td>
+<td>2/7</td>
+<td>5 harmful, incl. recall falling to 0.62</td>
+</tr>
+<tr>
+<td>R3 PR-AUC ≥ baseline (strict)</td>
+<td>3/5</td>
+<td>5/7</td>
+<td>threshold regressions; blocks 2 refactors</td>
+</tr>
+<tr>
+<td>R4 PR-AUC ≥ baseline − 0.02</td>
+<td>5/5</td>
+<td>5/7</td>
+<td>threshold-0.5 and threshold-0.7 (PR-AUC unchanged)</td>
+</tr>
+<tr>
+<td>R6 F2 ≥ baseline − 0.02</td>
+<td>5/5</td>
+<td>6/7</td>
+<td>raw-features-only (−0.060 PR-AUC)</td>
+</tr>
+<tr>
+<td>R7 R4 + recall ≥ 0.70</td>
+<td>5/5</td>
+<td>6/7</td>
+<td>threshold-0.5 (recall 0.765)</td>
+</tr>
+<tr>
+<td><strong>R8 R4 + recall ≥ 0.85 (adopted)</strong></td>
+<td><strong>5/5</strong></td>
+<td><strong>7/7</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>Benign changes on the fixed split moved PR-AUC by ≤ 0.0095, and the smallest real regression was 0.060. The 0.02 tolerance therefore sits 2× above jitter and 3× below harm.</p>
+<p>The trade-offs we accept:</p>
+<ul>
+<li>up to 0.02 of real PR-AUC loss can pass, though it cannot compound because the baseline is fixed;</li>
+<li>the recall floor is coarse (one test defaulter = 2.9 points), so changes that move the split itself need the multi-seed drill.</li>
+</ul>
+<p>The one-page memo (<code>docs/gate_defense_memo.md</code>) states what evidence would change the rule: cost data, a larger pooled test set, or benign shifts above 0.02.</p>
+<p><strong>Fairness.</strong> Out-of-fold over 800 customers, the High-income group has fewer false flags (FPR 12.4% vs 17.3–17.6%) but more missed defaulters (FNR 9.5% vs 3.0–6.3%). The test-split view rests on only 5 High-income defaulters. All intervals overlap, and retraining without <code>Income_Bracket</code> leaves PR-AUC (0.878) and the gaps unchanged. The disparity is therefore not caused by the income input: it follows the behavioural features and the groups' base rates (12.7% vs 20–21%). We judge it <strong>acceptable</strong>, re-check it on every data version, set a 10-point gap with a CI excluding 0 as the trigger to act, and propose dropping the uninformative income feature in a future PR.</p>
+<h2>4. Data-change drill: v1 versus v2 (Task 7)</h2>
+<p>Dataset v2 (v1 plus 300 new customers) went through the same CI configuration. Both versions were pulled from history with <code>dvc get --rev</code> and trained with <strong>five seeds</strong> each: 10 tracked runs tagged <code>data_version</code> and <code>data_md5</code>. Because the split hashes <code>(seed, Customer_ID)</code>, every v1 customer sits on the same side in both versions, which allows a paired comparison on identical rows.</p>
+<p><img alt="Drill" src="file:///Users/admin/Desktop/Nikhil_Harsh_MLOPSPROJECT/reports/figures/drill_v1_v2.png" /></p>
+<table>
+<thead>
+<tr>
+<th>v2 − v1 (PR-AUC)</th>
+<th>Mean</th>
+<th>SD (seeds)</th>
+<th>v2 better</th>
+<th>p (paired t)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Own test split (what CI sees)</td>
+<td>+0.0066</td>
+<td>0.0268</td>
+<td>3/5</td>
+<td>0.61</td>
+</tr>
+<tr>
+<td>Identical v1 test customers</td>
+<td>−0.0004</td>
+<td>0.0126</td>
+<td>2/5</td>
+<td>0.95</td>
+</tr>
+<tr>
+<td>New-customer test rows</td>
+<td>+0.0083</td>
+<td>0.0056</td>
+<td>5/5</td>
+<td>0.03</td>
+</tr>
+<tr>
+<td>Recall, own split</td>
+<td>−0.0351</td>
+<td>0.0556</td>
+<td>1/5</td>
+<td>0.23</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Findings.</strong></p>
+<ul>
+<li>On the gate's seed, v2 scores PR-AUC 0.8997 against the baseline's 0.8762 (+0.0235), and the gate passes it.</li>
+<li>That apparent gain is not real. Over seeds it is +0.007 ± 0.027, the same size as pure seed noise (sd 0.025). On identical customers the models are indistinguishable, and every seed's paired-bootstrap 95% interval contains 0.</li>
+<li>Most of the +0.0235 comes from a different, easier test set: the v1 model already reaches 0.93 on the new customers.</li>
+<li>The only consistent gain is small and expected (+0.008 on new customers).</li>
+<li>Drift is minor: the new customers are slightly older (KS p = 0.007, PSI 0.095) and identical on financial features and default rate.</li>
+</ul>
+<p><strong>Conclusion: the gate should accept the v2 model as "not worse", not as "better".</strong> It is equivalent on known customers, slightly better on the new segment, trained on 37.5% more and fresher data, and representative of the current population. We merge it and move the baseline in a separate <code>baseline-update</code> PR whose reason cites this drill, without claiming a +0.024 improvement. Recall at the F2-tuned threshold fell below 0.85 for two of five seeds, so the next data month is the first place to watch.</p>
+<h2>5. Limitations and next steps</h2>
+<ul>
+<li>Small test sets: 34–64 defaulters per split limit how precise recall and subgroup estimates can be. Pooling months would allow a tighter tolerance and a relative recall guard.</li>
+<li>Cost-based gating needs real cost-of-error figures from the risk team.</li>
+<li>Out of scope but straightforward with the same artefacts: a scheduled retrain trigger (<code>on: schedule</code>), a REST endpoint serving <code>@champion</code>, and live drift and subgroup dashboards.</li>
+</ul></body></html>

@@ -1,0 +1,50 @@
+<!doctype html><html><head><meta charset='utf-8'><title>gate_defense_memo</title><style>
+@page { size: A4; margin: 15mm 15mm 14mm 15mm; }
+body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 9.6pt; line-height: 1.38; color: #1d2731; }
+h1 { font-size: 16pt; margin: 0 0 2pt 0; color: #264653; }
+h2 { font-size: 11.5pt; margin: 9pt 0 3pt 0; color: #264653; border-bottom: 1px solid #d5dde3; padding-bottom: 1pt; }
+h3 { font-size: 10pt; margin: 6pt 0 2pt 0; color: #2a6f66; }
+p { margin: 2pt 0 4pt 0; text-align: justify; }
+ul, ol { margin: 2pt 0 4pt 0; padding-left: 15pt; }
+li { margin: 0 0 1.5pt 0; }
+table { border-collapse: collapse; width: 100%; margin: 3pt 0 5pt 0; font-size: 8.3pt; }
+th { background: #264653; color: white; text-align: left; padding: 2pt 4pt; font-weight: 600; }
+td { border-bottom: 1px solid #e3e8ec; padding: 1.6pt 4pt; vertical-align: top; }
+tr:nth-child(even) td { background: #f6f8f9; }
+img { max-width: 100%; display: block; margin: 3pt auto; }
+img.half { max-width: 49%; display: inline-block; }
+code { font-family: Menlo, monospace; font-size: 8pt; background: #f1f3f5; padding: 0 2pt; border-radius: 2px; }
+.meta { color: #5c6b77; font-size: 8.6pt; margin-bottom: 5pt; }
+blockquote { margin: 3pt 0; padding: 2pt 8pt; border-left: 3px solid #2a9d8f; background: #eef7f5; }
+strong { color: #13232f; }
+</style></head><body><h1>Quality-gate defense memo</h1>
+<p><strong>To:</strong> Risk team · <strong>From:</strong> MLOps engineering · <strong>Re:</strong> Which rule should block a monthly model change</p>
+<p><strong>Recommendation.</strong> Block a pull request unless <strong>PR-AUC ≥ baseline − 0.02 AND recall at the tuned threshold ≥ 0.85</strong>, with tests passing (rule <strong>R8</strong>, <code>configs/base.yaml → gate</code>).</p>
+<p><strong>Evidence (our own 18 tracked gate-history runs; <a href="threshold_and_fairness.md">full table</a>).</strong> We replayed eight candidate rules against changes of known effect.</p>
+<ul>
+<li><strong>R8 is the only rule with zero false blocks (5/5 benign changes accepted) and zero false accepts (7/7 harmful changes rejected).</strong></li>
+<li>Accuracy (R1) accepted 5 of 7 harmful changes, because a model that misses more defaulters looks <em>more</em> accurate.</li>
+<li>Strict PR-AUC (R3) blocked 2 harmless refactors.</li>
+<li>Every ranking-only rule (R2–R5) accepted the two threshold regressions, where recall fell to 0.76 and 0.62 with PR-AUC exactly unchanged.</li>
+<li>A 0.70 recall floor (R7) still let recall fall from 0.97 to 0.76.</li>
+</ul>
+<p><strong>Why these numbers.</strong></p>
+<ul>
+<li><strong>0.02 tolerance:</strong> benign changes on the gate's fixed split moved PR-AUC by ≤ 0.0095, while the smallest real regression was 0.060. The tolerance sits 2× above jitter and 3× below harm.</li>
+<li><strong>Recall floor 0.85:</strong> this is the weakest recall any benign change produced (0.94) minus a margin for the test set's granularity (one defaulter = 2.9 points). It also sits above every threshold regression we observed.</li>
+<li><strong>No compounding drift:</strong> each PR is compared with the <em>fixed</em> baseline, not with the previous PR, so a chain of small drops cannot add up.</li>
+</ul>
+<p><strong>Trade-offs we accept by choosing R8 over the alternatives.</strong></p>
+<ol>
+<li><strong>A real loss of up to 0.02 PR-AUC can pass unnoticed</strong> (R3 would catch it but blocks 40% of harmless changes). We prefer that engineers trust the gate over a gate that cries wolf.</li>
+<li><strong>The recall floor is coarse and seed-sensitive.</strong> On different splits (noise probes) recall ranged 0.83–0.97, and R8 accepted only 2 of 5 seed changes. A change that alters the evaluation split (a seed change, or a new data version) can be blocked by noise rather than harm. That is why data changes go through the multi-seed drill and a protected baseline update, not the single CI number.</li>
+<li><strong>R8 does not price precision.</strong> Recall can be bought with more false alarms (FPR 22% today). We accept this because the bank values catching defaulters; F2 (R6) priced it better but let a 0.06 PR-AUC regression through.</li>
+<li><strong>Fairness is monitored, not gated.</strong> The Income_Bracket gaps (FPR 5.2 points, FNR 6.5 points) are within noise and do not come from the income input, so we did not add a subgroup gate that would be mostly noise on 21 High-income defaulters.</li>
+</ol>
+<p><strong>What new evidence would change this recommendation.</strong></p>
+<ul>
+<li><strong>Cost data from the risk team.</strong> If the cost of a false alarm is close to that of a missed defaulter, we would move to an expected-cost or F2 rule.</li>
+<li><strong>A larger or pooled test set</strong> (v2 and later months). A smaller seed sd would justify tightening the tolerance to 0.01 and replacing the fixed floor with a relative one (recall ≥ baseline − 0.05).</li>
+<li><strong>Benign changes that legitimately move PR-AUC by more than 0.02</strong> (e.g. a new data source). We would then widen the tolerance or add a multi-seed paired check in CI.</li>
+<li><strong>A subgroup gap above 10 points with a CI excluding 0</strong>, or regulatory guidance treating income as a protected attribute. We would then add a per-group FNR/FPR guard.</li>
+</ul></body></html>

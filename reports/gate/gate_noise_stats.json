@@ -1,0 +1,27 @@
+{
+  "baseline_run_id": "ad88ff00eae74982be7eb388e3eb2cc3",
+  "baseline": {
+    "average_precision": 0.8762068292073815,
+    "roc_auc": 0.9692337461300309,
+    "recall": 0.9705882352941176,
+    "precision": 0.4925373134328358,
+    "f2": 0.812807881773399,
+    "accuracy": 0.8118279569892473,
+    "balanced_accuracy": 0.8734520123839009
+  },
+  "seed_ap_values": [
+    0.8762068292073815,
+    0.8416607024265557,
+    0.8574198272217592,
+    0.8712556431484748,
+    0.8393354091324805,
+    0.905519448760896
+  ],
+  "seed_ap_std": 0.02476723321738928,
+  "benign_paired_max_abs_ap_delta": 0.009535624886213734,
+  "harmful_min_ap_drop": 0.05968468822262196,
+  "harmful_ap_unchanged": [
+    "threshold-0.5",
+    "threshold-0.7"
+  ]
+}

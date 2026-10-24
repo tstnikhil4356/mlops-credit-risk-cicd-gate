@@ -1,0 +1,59 @@
+{
+  "registered_model": "credit-risk-classifier",
+  "version": 1,
+  "alias": "champion",
+  "run_id": "8226855713d9416faf519b5c38c99b15",
+  "model_uri": "models:/credit-risk-classifier@champion",
+  "git_commit": "9ed82f252f57a78ca6a0d985f3484d611b8ccd84",
+  "git_dirty": "false",
+  "data_version": "v1",
+  "data_md5": "107f23e3bb76e1e34faaf8ddcc25a8e0",
+  "config_name": "full",
+  "config_sha256": "c7066caaeac1eecd95c7d0076c5e5456c551bebeec8f068fe268d8a4e66584c6",
+  "seed": "42",
+  "candidate": "logreg_tuned",
+  "selection_metric": "cv average_precision",
+  "cv_selection_score": 0.873229282735303,
+  "test_metrics": {
+    "average_precision": 0.8762068292073815,
+    "roc_auc": 0.9692337461300309,
+    "brier": 0.052719062586316486,
+    "recall": 0.9705882352941176,
+    "precision": 0.4925373134328358,
+    "f1": 0.6534653465346535,
+    "f2": 0.812807881773399,
+    "balanced_accuracy": 0.8734520123839009,
+    "accuracy": 0.8118279569892473,
+    "false_positive_rate": 0.2236842105263158,
+    "false_negative_rate": 0.029411764705882353,
+    "tp": 33.0,
+    "fp": 34.0,
+    "tn": 118.0,
+    "fn": 1.0,
+    "threshold": 0.132566,
+    "n": 186.0,
+    "positives": 34.0
+  },
+  "ranking": [
+    {
+      "run_id": "8226855713d9416faf519b5c38c99b15",
+      "candidate": "logreg_tuned",
+      "cv_selection_score": 0.873229282735303
+    },
+    {
+      "run_id": "9066198248d0480f84abcd417246332a",
+      "candidate": "logreg_default",
+      "cv_selection_score": 0.8656922040951585
+    },
+    {
+      "run_id": "1afa0a04393747cb9d0e5d0d7a877e48",
+      "candidate": "random_forest_tuned",
+      "cv_selection_score": 0.8522169871082943
+    },
+    {
+      "run_id": "d6aea2504e5f4769abe9e836dcaa87be",
+      "candidate": "hist_gb_tuned",
+      "cv_selection_score": 0.851827234307952
+    }
+  ]
+}
