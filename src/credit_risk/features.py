@@ -33,7 +33,7 @@ def safe_ratio(numerator: pd.Series, denominator: pd.Series, cap: float = RATIO_
     """numerator / denominator with explicit, documented edge-case handling.
 
     * denominator > 0  -> plain ratio, clipped to [0, cap]
-    * denominator <= 0 and numerator > 0 -> cap (owing money with no limit is maximal risk)
+    * denominator <= 0 -> 0 (no limit means no utilisation)
     * denominator <= 0 and numerator == 0 -> 0 (nothing owed, nothing at risk)
     * either side missing -> NaN (handled by imputation upstream)
     """
@@ -43,7 +43,7 @@ def safe_ratio(numerator: pd.Series, denominator: pd.Series, cap: float = RATIO_
         ratio = num / den.where(den > 0)
     ratio = ratio.clip(lower=0.0, upper=cap)
     no_limit = (den <= 0) & num.notna()
-    ratio = ratio.mask(no_limit & (num > 0), cap).mask(no_limit & (num <= 0), 0.0)
+    ratio = ratio.mask(no_limit, 0.0)
     return ratio
 
 
