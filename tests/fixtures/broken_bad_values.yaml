@@ -1,0 +1,10 @@
+# Deliberately broken: wrong types and out-of-range values.
+extends: ../../configs/base.yaml
+name: broken-bad-values
+seed: -1
+data:
+  test_size: 0.9
+training:
+  cv_folds: one
+gate:
+  metric: accuracy

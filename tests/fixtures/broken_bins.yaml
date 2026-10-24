@@ -1,0 +1,5 @@
+# Deliberately broken: age bins/labels inconsistent.
+extends: ../../configs/base.yaml
+name: broken-bins
+features:
+  age_bins: [0, 30, 20, 120]

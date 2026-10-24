@@ -1,0 +1,5 @@
+# Deliberately broken: typo in a key (utilization vs utilisation) must fail loudly.
+extends: ../../configs/base.yaml
+name: broken-unknown-key
+features:
+  utilization_risk_cutoff: 0.8
