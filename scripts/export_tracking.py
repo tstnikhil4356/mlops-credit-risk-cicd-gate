@@ -66,7 +66,8 @@ def main() -> int:
            "| model | version | aliases | run | candidate | data | git commit | config | created |",
            "|---|---|---|---|---|---|---|---|---|"]
     for rm in client.search_registered_models():
-        for mv in client.search_model_versions(f"name='{rm.name}'"):
+        for found in client.search_model_versions(f"name='{rm.name}'"):
+            mv = client.get_model_version(rm.name, found.version)  # search results omit aliases
             t = mv.tags
             reg.append(f"| {rm.name} | {mv.version} | {', '.join(mv.aliases) or '-'} | `{mv.run_id[:8]}` | "
                        f"{t.get('candidate')} | {t.get('data_version')} (`{str(t.get('data_md5'))[:8]}`) | "
