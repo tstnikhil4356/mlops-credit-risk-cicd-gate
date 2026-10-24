@@ -1,0 +1,5 @@
+outs:
+- md5: 107f23e3bb76e1e34faaf8ddcc25a8e0
+  size: 41847
+  hash: md5
+  path: credit_card_customers.csv

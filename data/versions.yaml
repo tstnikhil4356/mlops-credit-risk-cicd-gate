@@ -1,0 +1,8 @@
+# Human-readable labels for DVC-tracked dataset versions.
+# Key = DVC md5 of data/raw/credit_card_customers.csv (see the .dvc pointer file).
+# Every training run logs both the md5 and this label to MLflow.
+versions:
+  107f23e3bb76e1e34faaf8ddcc25a8e0:
+    label: v1
+    rows: 800
+    description: Initial dataset supplied with the brief (credit_card_customers_v1.csv)
